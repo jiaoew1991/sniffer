@@ -6,11 +6,13 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.jiaoew.MainSniffer;
-import com.jiaoew.PackageFilter;
+import com.jiaoew.filter.PackageFilter;
 
 import jpcap.packet.ARPPacket;
 import jpcap.packet.IPPacket;
@@ -26,49 +28,32 @@ public class PacketHandler {
 		mPacket = packet;
 	}
 	public boolean isPacketMatchFilter(PackageFilter filter) {
-		if (filter == null) {
+
+		if (mPacket == null) {
+			return false;
+		} else if (filter == null) {
 			return true;
-		} else {
-			if (mPacket instanceof IPPacket) {
-				try {
-					if (filter.getDst_ip() != null && !InetAddress.getByName(filter.getDst_ip()).equals(((IPPacket) mPacket).dst_ip)) return false;
-					if (filter.getSrc_ip() != null && !InetAddress.getByName(filter.getSrc_ip()).equals(((IPPacket) mPacket).src_ip)) return false;
-					if (filter.getProtocal() != -1 && filter.getProtocal() != ((IPPacket)mPacket).protocol) return false;
-					if (filter.getSrc_port() != -1 && mPacket instanceof TCPPacket && filter.getSrc_port() != ((TCPPacket)mPacket).src_port) return false;
-					if (filter.getDst_port() != -1 && mPacket instanceof TCPPacket && filter.getDst_port() != ((TCPPacket)mPacket).dst_port) return false;
-					if (filter.getSrc_port() != -1 && mPacket instanceof UDPPacket && filter.getSrc_port() != ((UDPPacket)mPacket).src_port) return false;
-					if (filter.getDst_port() != -1 && mPacket instanceof UDPPacket && filter.getDst_port() != ((UDPPacket)mPacket).dst_port) return false;
-					return true;
-				} catch (UnknownHostException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			} else if (mPacket instanceof ARPPacket){
-				try {
-					if (filter.getProtocal() != -1 && filter.getProtocal() != MainSniffer.ARP_PROTOL) return false;
-					if (filter.getDst_ip() != null && !InetAddress.getByName(filter.getDst_ip()).equals(((ARPPacket) mPacket).getTargetProtocolAddress())) return false;
-					if (filter.getSrc_ip() != null && !InetAddress.getByName(filter.getSrc_ip()).equals(((ARPPacket) mPacket).getSenderProtocolAddress())) return false;
-					return true;
-				} catch (UnknownHostException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			}
 		}
-		return false;
+		return filter.filterPacket(mPacket);
 	}
-	private void write2File(BufferedWriter bfWriter) throws IOException {
-		bfWriter.append(mPacket.toString());
+	protected void write2File(BufferedWriter bfWriter) throws IOException {
+//		String p = mPacket.toString();
+//		int white = p.indexOf(' ');
+		String timeStamp = new Timestamp(mPacket.sec * 1000 + mPacket.usec / 1000).toString(); 
+//		String target = timeStamp + " " + p.substring(white + 1);
+		bfWriter.append(timeStamp);
 	}
 	public static void SaveSelectedPacket(List<PacketHandler> packet, String fileName) throws IOException {
 		File file = new File(fileName);
-		if (!file.exists()) {
-			file.createNewFile();
+		if (file.exists()) {
+			file.delete();
 		}
+		file.createNewFile();
 		BufferedWriter bfWriter = new BufferedWriter(new FileWriter(file));
 		for (PacketHandler packetHandler : packet) {
 			packetHandler.write2File(bfWriter);
-			bfWriter.append("\n");
+			bfWriter.append("\r\n");
 		}
+		bfWriter.close();
 	}
 }

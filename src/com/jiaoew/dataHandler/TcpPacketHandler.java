@@ -4,7 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
-import com.jiaoew.PackageFilter;
+import com.jiaoew.filter.PackageFilter;
 
 import jpcap.packet.Packet;
 import jpcap.packet.TCPPacket;
