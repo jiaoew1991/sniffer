@@ -13,9 +13,9 @@ public class ContentFilter implements Filter {
 	@Override
 	public boolean filterPacket(Packet packet) {
 		String packetData = new String(packet.data);
-		if (packetData.contains(mContent)) {
-			System.out.println("lllll");
-		}
+//		if (packetData.contains(mContent)) {
+//			System.out.println("lllll");
+//		}
 		return packetData.contains(mContent);
 	}
 
