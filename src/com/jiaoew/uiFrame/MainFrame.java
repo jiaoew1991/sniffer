@@ -29,6 +29,7 @@ import com.jiaoew.exception.NetworkInterfaceUnableException;
 import com.jiaoew.filter.ContentFilter;
 import com.jiaoew.filter.DstIPFilter;
 import com.jiaoew.filter.DstPortFilter;
+import com.jiaoew.filter.Filter;
 import com.jiaoew.filter.PackageFilter;
 import com.jiaoew.filter.ProtocalFilter;
 import com.jiaoew.filter.SrcIPFilter;
@@ -40,6 +41,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import javax.swing.table.DefaultTableModel;
 
@@ -51,6 +53,7 @@ public class MainFrame {
 	private JTable table;
 	private MainSniffer mSniffer;
 
+	private int count = 0;
 	private List<PacketHandler> pHandlerList = new ArrayList<PacketHandler>();
 	/**
 	 * Launch the application.
@@ -103,9 +106,8 @@ public class MainFrame {
 		JMenuItem startMenuItem = new JMenuItem(Messages.getString("menu.file.startSniffer"));
 		startMenuItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				if (showOpenDeviceDialog()) {
-					mnNewMenu_1.setEnabled(true);
-				}
+				showOpenDeviceDialog();
+//				mnNewMenu_1.setEnabled(true);
 			}
 		});
 		mnNewMenu.add(startMenuItem);
@@ -128,7 +130,7 @@ public class MainFrame {
 		mnNewMenu.add(exitMenuItem);
 		
 		mnNewMenu_1 = new JMenu(Messages.getString("menu.edit"));
-		mnNewMenu_1.setEnabled(false);
+//		mnNewMenu_1.setEnabled(false);
 		menuBar.add(mnNewMenu_1);
 		
 		JMenuItem optionMenuItem = new JMenuItem(Messages.getString("menu.edit.option")); 
@@ -199,6 +201,7 @@ public class MainFrame {
 			new Object[][] {
 			},
 			new String[] {
+				Messages.getString("mainFrame.table.header.count"),
 				Messages.getString("mainFrame.table.header.time"), 
 				Messages.getString("mainFrame.table.header.src_ip"),
 				Messages.getString("mainFrame.table.header.dst_ip"),
@@ -216,13 +219,21 @@ public class MainFrame {
 			@Override
 			public void onSniffer(PacketHandler ph) {
 				try {
-					model.addRow(ph.getPacketInfo().toArray());				
+					count++;
+					Object[] data = new Object[6];
+					data[0] = new Integer(count);
+					List<String> info = ph.getPacketInfo();
+					for (int i = 1; i < 6; i++) {
+						data[i]	= info.get(i - 1);
+					}
+					model.addRow(data);				
+					pHandlerList.add(ph);
+					JScrollBar vBar = scrollPane.getVerticalScrollBar();
+					vBar.setValue(vBar.getMaximum());
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
-				pHandlerList.add(ph);
-				JScrollBar vBar = scrollPane.getVerticalScrollBar();
-				vBar.setValue(vBar.getMaximum());
+				
 			}
 		});
 		table.addMouseListener(new MouseAdapter() {
@@ -255,20 +266,26 @@ public class MainFrame {
 	private void clearTable() {
 		DefaultTableModel model = (DefaultTableModel) table.getModel();
 		model.getDataVector().removeAllElements();
+		model.fireTableDataChanged();
 		pHandlerList = new ArrayList<PacketHandler>();
 		packetInfoText.setText("");
 		packetDataText.setText("");
+		count = 0;
 	}
 	private void changeInfoText() {
 		int row = table.getSelectedRow();
-		PacketHandler ph = pHandlerList.get(row);
+		DefaultTableModel model = (DefaultTableModel) table.getModel();
+		Integer num = (Integer) model.getValueAt(row, 0);
+		PacketHandler ph = pHandlerList.get(num - 1);
 		StringBuffer sBuffer = new StringBuffer();
 		for (String str : ph.getPacketInfo()) {
 			sBuffer.append(str);
 			sBuffer.append('\n');
 		}
-		packetInfoText.setText(sBuffer.toString());
+		packetInfoText.setLineWrap(true);
+		packetInfoText.setText(sBuffer.toString() + "\n" + ph.getPacketDetailInfo());
 		packetDataText.setText(ph.getPacketData());
+		System.out.println(ph.getPacketData());
 	}
 	public void setStartSniffer(int index) {
 		try {
@@ -375,12 +392,24 @@ public class MainFrame {
 	}
 
 	protected void savePacket2File() {
+		int selected = table.getSelectedRowCount();
+		List<PacketHandler> list = new ArrayList<PacketHandler>();
+		if (selected != 0) {
+			int[] rows = table.getSelectedRows();
+			for (int i : rows) {
+				list.add(pHandlerList.get(i));
+			}
+		}
 		JFileChooser chooser = new JFileChooser();
 		int ret = chooser.showDialog(frame, Messages.getString("optionDialog.label.save"));
 		if (ret == JFileChooser.APPROVE_OPTION) {
 			File file = chooser.getSelectedFile();
 			try {
-				PacketHandler.SaveSelectedPacket(pHandlerList, file);
+				if (selected != 0) {
+					PacketHandler.SaveSelectedPacket(list, file);
+				} else {
+					PacketHandler.SaveSelectedPacket(pHandlerList, file);
+				}
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -394,9 +423,29 @@ public class MainFrame {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				String text = dialog.textField.getText();
-				PackageFilter filter = (PackageFilter) mSniffer.getPackageFilter();
-				filter.addFilter(new ContentFilter(text));
-				mSniffer.setPackageFilter(filter);
+//				PackageFilter filter = (PackageFilter) mSniffer.getPackageFilter();
+//				if (filter == null) {
+//					filter = new PackageFilter();
+//				}
+//				filter.addFilter(new ContentFilter(text));
+//				mSniffer.setPackageFilter(filter);
+				Filter filter = new ContentFilter(text);
+				mSniffer.stopSniffer();
+				Map<Integer, PacketHandler> newList = PacketHandler.getTargetPacket(pHandlerList, filter);
+				DefaultTableModel model = (DefaultTableModel) table.getModel();
+				model.getDataVector().removeAllElements();
+				model.fireTableDataChanged();
+				for (Map.Entry<Integer, PacketHandler> item: newList.entrySet()) {
+					PacketHandler ph = item.getValue();
+					int num = item.getKey();
+					Object[] data = new Object[6];
+					data[0] = new Integer(num);
+					List<String> info = ph.getPacketInfo();
+					for (int i = 1; i < 6; i++) {
+						data[i]	= info.get(i - 1);
+					}
+					model.addRow(data);				
+				}
 				dialog.dispose();
 			}
 		});
@@ -407,6 +456,6 @@ public class MainFrame {
 	private void stopSniffer() {
 		mSniffer.stopSniffer();
 		mSniffer.setPackageFilter(null);
-		mnNewMenu_1.setEnabled(false);
+//		mnNewMenu_1.setEnabled(false);
 	}
 }

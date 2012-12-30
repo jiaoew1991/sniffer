@@ -6,7 +6,9 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import jpcap.packet.Packet;
 
@@ -57,6 +59,28 @@ public class PacketHandler {
 		}
 		bfWriter.close();
 	}
+	public static Map<Integer, PacketHandler>getTargetPacket(List<PacketHandler> list, Filter filter) {
+		Map<Integer, PacketHandler> map = new HashMap<Integer, PacketHandler>();
+		int count = 0;
+		for (PacketHandler ph : list) {
+			if (ph.isPacketMatchFilter(filter)) {
+				map.put(new Integer(count), ph);
+			}
+			count ++;
+		}
+		return map;
+	}
+	public static List<Integer> getTargetPacketIndex(List<PacketHandler> list, Filter filter) {
+		List<Integer> mList = new ArrayList<Integer>();
+		int count = 0;
+		for (PacketHandler ph : list) {
+			if (ph.isPacketMatchFilter(filter)) {
+				mList.add(count);
+			}
+			count ++;
+		}
+		return mList;
+	}
 	public String getPacketData() {
 		return new String(mPacket.data);
 	}
@@ -68,5 +92,8 @@ public class PacketHandler {
 		info.add("");
 		info.add("");
 		return info;
+	}
+	public String getPacketDetailInfo() {
+		return mPacket.datalink.toString();
 	}
 }

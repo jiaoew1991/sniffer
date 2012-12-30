@@ -9,14 +9,21 @@ public class ICMPPacketHandler extends IPPacketHandler {
 
 	public ICMPPacketHandler(ICMPPacket packet) {
 		super(packet);
-		// TODO Auto-generated constructor stub
 	}
 
 	@Override
 	protected void write2File(BufferedWriter bfWriter) throws IOException {
 		super.write2File(bfWriter);
-		ICMPPacket icmpPacket = (ICMPPacket) mPacket;
-		bfWriter.append(", Type:" + icmpPacket.type + ", Code:" + icmpPacket.code);
+		bfWriter.append(details());
 	}
 
+	@Override
+	public String getPacketDetailInfo() {
+		return super.getPacketDetailInfo() + details();
+	}
+
+	private String details() {
+		ICMPPacket icmpPacket = (ICMPPacket) mPacket;
+		return ", Type:" + icmpPacket.type + ", Code:" + icmpPacket.code;
+	}
 }

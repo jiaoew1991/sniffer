@@ -13,7 +13,7 @@ public class DstIPFilter implements Filter {
 	@Override
 	public boolean filterPacket(Packet packet) {
 		if (mIp != null) {
-			if (packet instanceof IPPacket && ((IPPacket) packet).dst_ip.toString().equals(mIp)) return true;
+			if (packet instanceof IPPacket && ((IPPacket) packet).dst_ip.toString().substring(1).equals(mIp)) return true;
 			else if (packet instanceof ARPPacket && ((ARPPacket) packet).getTargetProtocolAddress().toString().equals(mIp)) return true;
 		}
 		return false;

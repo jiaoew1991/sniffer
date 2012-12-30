@@ -22,15 +22,15 @@ public class IPPacketHandler extends PacketHandler {
 	protected void write2File(BufferedWriter bfWriter) throws IOException {
 		super.write2File(bfWriter);
 		bfWriter.append(' ');
-		IPPacket ipPacket = (IPPacket) mPacket;
-		bfWriter.append("Source IP: " + ipPacket.src_ip + ", Destination IP: " + ipPacket.dst_ip + ", Protocal: " + ProtocalType.getProtocalByValue(ipPacket.protocol).name() + ", priority" + ipPacket.priority);
-		if (ipPacket.version == 4) {
-			bfWriter.append(", D: " + ipPacket.d_flag + ", T: " + ipPacket.t_flag + ", R: " + ipPacket.r_flag + ", hop limit: " + ipPacket.hop_limit
-					+ ", RF: " + ipPacket.rsv_frag + ", DF: " + ipPacket.dont_frag + ", MF: " + ipPacket.more_frag + ", Offset: " + ipPacket.offset + ", Ident: " + ipPacket.ident);
-		} else {
-			bfWriter.append(", Flowlabel:" + ipPacket.flow_label + ", hop:" + ipPacket.hop_limit);
- 
-		}
+		bfWriter.append(this.details());
+//		bfWriter.append("Source IP: " + ipPacket.src_ip + ", Destination IP: " + ipPacket.dst_ip + ", Protocal: " + ProtocalType.getProtocalByValue(ipPacket.protocol).name() + ", priority" + ipPacket.priority);
+//		if (ipPacket.version == 4) {
+//			bfWriter.append(", D: " + ipPacket.d_flag + ", T: " + ipPacket.t_flag + ", R: " + ipPacket.r_flag + ", hop limit: " + ipPacket.hop_limit
+//					+ ", RF: " + ipPacket.rsv_frag + ", DF: " + ipPacket.dont_frag + ", MF: " + ipPacket.more_frag + ", Offset: " + ipPacket.offset + ", Ident: " + ipPacket.ident);
+//		} else {
+//			bfWriter.append(", Flowlabel:" + ipPacket.flow_label + ", hop:" + ipPacket.hop_limit);
+// 
+//		}
 	}
 	@Override
 	public List<String> getPacketInfo() {
@@ -55,6 +55,26 @@ public class IPPacketHandler extends PacketHandler {
 			break;
 		}
 		return list;
+	}
+
+	@Override
+	public String getPacketDetailInfo() {
+		StringBuffer sb = new StringBuffer(super.getPacketDetailInfo());
+		sb.append(this.details());
+		return sb.toString();
+	}
+	
+	private String details() {
+		StringBuffer sb = new StringBuffer();
+		IPPacket ipPacket = (IPPacket) mPacket;
+		sb.append("Source IP: " + ipPacket.src_ip + ", Destination IP: " + ipPacket.dst_ip + ", Protocal: " + ProtocalType.getProtocalByValue(ipPacket.protocol).name() + ", priority" + ipPacket.priority);
+		if (ipPacket.version == 4) {
+			sb.append(", version: IPv4" + ", D: " + ipPacket.d_flag + ", T: " + ipPacket.t_flag + ", R: " + ipPacket.r_flag + ", hop limit: " + ipPacket.hop_limit
+					+ ", RF: " + ipPacket.rsv_frag + ", DF: " + ipPacket.dont_frag + ", MF: " + ipPacket.more_frag + ", Offset: " + ipPacket.offset + ", Ident: " + ipPacket.ident);
+		} else {
+			sb.append(", version: IPv6" + ", Flowlabel:" + ipPacket.flow_label + ", hop:" + ipPacket.hop_limit);
+		}
+		return sb.toString();
 	}
 
 }

@@ -14,7 +14,7 @@ public class SrcIPFilter implements Filter {
 	@Override
 	public boolean filterPacket(Packet packet) {
 		if (mIp != null) {
-			if (packet instanceof IPPacket && ((IPPacket) packet).src_ip.toString().equals(mIp)) return true;
+			if (packet instanceof IPPacket && ((IPPacket) packet).src_ip.toString().substring(1).equals(mIp)) return true;
 			else if (packet instanceof ARPPacket && ((ARPPacket) packet).getSenderProtocolAddress().toString().equals(mIp)) return true;
 		}
 		return false;
